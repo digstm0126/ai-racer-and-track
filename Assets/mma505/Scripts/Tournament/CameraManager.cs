@@ -1,5 +1,5 @@
 using UnityEngine;
-using Cinemachine;
+using Unity.Cinemachine;
 using UnityEngine.InputSystem;
 
 public class CameraManager : MonoBehaviour
@@ -12,9 +12,11 @@ public class CameraManager : MonoBehaviour
     // 4 - ArenaFinishZoneCamera
 
     [SerializeField]
+    [System.Obsolete]
     private CinemachineVirtualCamera[] vCams;
 
     [SerializeField]
+    [System.Obsolete]
     private CinemachineFreeLook flCam;
 
     // The agents array will be populated during the tournament
@@ -37,6 +39,7 @@ public class CameraManager : MonoBehaviour
     #endregion
 
 
+    [System.Obsolete]
     private void Start()
     {
         // Get list of all spawned agents
@@ -57,6 +60,7 @@ public class CameraManager : MonoBehaviour
         randomAgentAction = InputSystem.actions.FindAction("Random Agent");
     }
 
+    [System.Obsolete]
     void Update()
     {
         if (arenaAerialCamAction.IsPressed()) // ArenaAerialCamera
