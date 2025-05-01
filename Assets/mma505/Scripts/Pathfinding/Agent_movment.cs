@@ -1,16 +1,192 @@
-using UnityEngine;
-
-public class Agent_movment : MonoBehaviour
+namespace mma505
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
+    using System;
+    using System.Collections.Generic;
+    using TMPro;
+    using UnityEngine;
 
-    // Update is called once per frame
-    void Update()
+    public class Agent_movment : MonoBehaviour
     {
+
+        [Header("Ai settings")]
+
+        public Vector3 targetPos;  //target position
+        public float maxvelocity = 10f; //maximum velocity
+        public int offset = 1;
+        private Rigidbody rb;
+
+
+        public enum Algorithm
+        {
+            BreadthFirstSearch,
+            Dijkstra,
+            AStar,
+            AStar_Euclidian,
+            AStar_Manhattan,
+            AStar_Diagonal,
+            AStar_Octile
+        }
+
+        [Header("Algorithm Settings")]
+
+
+        private Transform start;
+        private Transform end;
+        private TerrainGraph graph;
+        private float gridOffset = 0.5f;
+        private List<Node> path = new List<Node>();
+        private LineRenderer lr; //line renderer
+        private Vector3[] lineVertices; //vertices of the line renderer
+        public Algorithm algorithm = Algorithm.BreadthFirstSearch;
         
+
+
+        private void Awake()
+        {
+            // get the rigidbody component
+            rb = GetComponent<Rigidbody>();
+            if (rb == null)
+            {
+                Debug.LogError("Rigidbody not found on the agent.");
+            }
+
+            
+        }
+
+        void Start()
+        {
+            graph = new TerrainGraph();
+            end = GameObject.FindWithTag("goal").transform;
+            start = transform;
+            lr = GetComponent<LineRenderer>();
+        }
+
+        private void Update() 
+        {
+            // generate the path and render it
+            RenderPath();
+
+            // set the target position to the desired position
+            SetTargetPos(offset);
+
+            // move towards the target position
+            MoveToTarget();
+
+
+            
+
+            
+        }
+
+        private void RenderPath()
+        {
+            // Start node position
+            int startX = (int)start.position.x;
+            int startZ = (int)start.position.z;
+
+            Node startNode = graph.grid[startX, startZ];
+
+            // End node position
+            int endX = (int)end.position.x;
+            int endZ = (int)end.position.z;
+
+            Node endNode = graph.grid[endX, endZ];
+
+            // Get list of nodes making the path based on selected algorithm
+
+            switch (algorithm)
+            {
+                case Algorithm.BreadthFirstSearch:
+                    path = PathAlgorithm.BFS(graph, startNode, endNode);
+                    break;
+                case Algorithm.Dijkstra:
+                    path = PathAlgorithm.Dijkstra(graph, startNode, endNode);
+                    break;
+                case Algorithm.AStar:
+                    path = PathAlgorithm.AStar(graph, startNode, endNode, (int)Algorithm.AStar);
+                    break;
+                case Algorithm.AStar_Euclidian:
+                    path = PathAlgorithm.AStar(graph, startNode, endNode, (int)Algorithm.AStar_Euclidian);
+                    break;
+                case Algorithm.AStar_Manhattan:
+                    path = PathAlgorithm.AStar(graph, startNode, endNode, (int)Algorithm.AStar_Manhattan);
+                    break;
+                case Algorithm.AStar_Diagonal:
+                    path = PathAlgorithm.AStar(graph, startNode, endNode, (int)Algorithm.AStar_Diagonal);
+                    break;
+                case Algorithm.AStar_Octile:
+                    path = PathAlgorithm.AStar(graph, startNode, endNode, (int)Algorithm.AStar_Octile);
+                    break;
+            }
+
+            // Create the line using an array of vertices based on the nodes in the path
+            // Grid offset points to the center of the node cell
+            lineVertices = new Vector3[path.Count];
+            int index = 0;
+
+            foreach (Node n in path)
+            {
+                float x = n.nodePosition.X + gridOffset;
+                float y = n.nodeHeight + gridOffset;
+                float z = n.nodePosition.Y + gridOffset;
+
+                lineVertices[index++] = new Vector3(x, y, z);
+            }
+
+            // Render the path
+            lr.positionCount = path.Count;
+            lr.SetPositions(lineVertices);
+        }
+
+
+        public void SetTargetPos(int offset) // sets the target node in path offset aheaad of curnt node
+        {
+    
+            // check if the path is not null
+            if (lineVertices != null)
+            {
+                if (offset >= lineVertices.Length)
+                {
+                    offset = lineVertices.Length - 1; // clamp the offset to the length of the path
+                }
+                else if (offset < 0)
+                {
+                    offset = 0; // clamp the offset to 0
+                }
+                // set the target position to the desired position
+                targetPos = lineVertices[offset];
+            }
+
+        }
+
+        private void MoveToTarget()
+        {
+            if (rb != null && targetPos != null)
+            {
+                Vector3 direction = targetPos - transform.position;
+                direction.y = 0;
+
+                if (direction.magnitude > 0.1f)
+                {
+
+                    // // Direct velocity modification
+                    Vector3 desiredVelocity = direction.normalized * maxvelocity;
+                    Vector3 velocityChange = desiredVelocity - rb.linearVelocity;
+                    velocityChange.y = 0; // Preserve gravity
+                    rb.linearVelocity += velocityChange * Time.fixedDeltaTime;
+
+                    // Clamp velocity
+                    rb.linearVelocity = Vector3.ClampMagnitude(rb.linearVelocity, maxvelocity);
+                    rb.angularVelocity = Vector3.ClampMagnitude(rb.angularVelocity, 7f);
+                }
+                else
+                {
+                    rb.linearVelocity = Vector3.zero;
+                    rb.angularVelocity = Vector3.zero;
+                }
+            }
+        }
+
+
     }
 }

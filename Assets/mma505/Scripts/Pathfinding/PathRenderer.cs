@@ -1,8 +1,9 @@
-namespace YourUserCode
+namespace mma505
 {
     using System.Collections.Generic;
     using TMPro;
     using UnityEngine;
+
 
     public class PathRenderer : MonoBehaviour
     {
@@ -21,18 +22,38 @@ namespace YourUserCode
             AStar_Octile
         }
 
+        
+
+        [Header("Algorithm Settings")]
         public Algorithm algorithm = Algorithm.BreadthFirstSearch;
 
         [Header("Info Refs")]
-        public TextMeshProUGUI startPosText;
-        public TextMeshProUGUI endPosText;
-        public TextMeshProUGUI accumulatedCostText;
-        public TextMeshProUGUI nodeNumText;
-
+        [SerializeField] private TextMeshProUGUI startPosText;
+        [SerializeField] private TextMeshProUGUI endPosText;
+        [SerializeField] private TextMeshProUGUI accumulatedCostText;
+        [SerializeField] private TextMeshProUGUI nodeNumText;
 
         private TerrainGraph graph;
         private float gridOffset = 0.5f;
         private List<Node> path = new List<Node>();
+
+        private void Awake()
+        {
+            if (startPosText == null)
+                startPosText = GameObject.Find("StartCubePosText").GetComponent<TextMeshProUGUI>();
+
+            if (endPosText == null)
+                endPosText = GameObject.Find("EndCubePosText").GetComponent<TextMeshProUGUI>();
+
+            if (accumulatedCostText == null)
+                accumulatedCostText = GameObject.Find("AccumulatedCostText").GetComponent<TextMeshProUGUI>();
+
+            if (nodeNumText == null)
+                nodeNumText = GameObject.Find("NodeNumText").GetComponent<TextMeshProUGUI>();
+
+            if (end == null)
+                end = GameObject.Find("End Cube")?.transform;
+        }
 
         void Start()
         {
@@ -85,8 +106,6 @@ namespace YourUserCode
                     path = PathAlgorithm.AStar(graph, startNode, endNode, (int)Algorithm.AStar_Octile);
                     break;
             }
-
-
 
             // Create the line using an array of vertices based on the nodes in the path
             // Grid offset points to the center of the node cell

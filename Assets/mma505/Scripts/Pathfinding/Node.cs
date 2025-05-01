@@ -1,4 +1,4 @@
-namespace YourUserCode
+namespace mma505
 {
     using System.Numerics;
 

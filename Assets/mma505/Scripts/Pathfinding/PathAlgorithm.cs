@@ -1,4 +1,4 @@
-namespace YourUserCode
+namespace mma505
 {
     using System.Collections.Generic;
     using System.Runtime.CompilerServices;
