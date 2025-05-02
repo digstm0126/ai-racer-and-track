@@ -5,12 +5,16 @@ namespace mma505
     using TMPro;
     using UnityEngine;
     using UnityEditor;
+    using System.Net;
 
     public class Agent_movment : MonoBehaviour
     {
 
         [Header("debug settings")]
-        //private Gizmos debugTarget;
+    
+        public bool debugRays = false; // debug mode
+        public bool RenderLine = false; // render the line
+        public bool RenderTargetGizmo = false; // render the target gizmo
 
         [Header("Ai settings")]
 
@@ -46,37 +50,24 @@ namespace mma505
         private LineRenderer lr; //line renderer
         private Vector3[] lineVertices; //vertices of the line renderer
         public Algorithm algorithm = Algorithm.BreadthFirstSearch;
-        
+      
 
-
-        private void Awake()
-        {
-            // get the rigidbody component
-            rb = GetComponent<Rigidbody>();
-            if (rb == null)
-            {
-                Debug.LogError("Rigidbody not found on the agent.");
-            }
-            
-        }
 
         void Start()
         {
+            rb = GetComponent<Rigidbody>();
             graph = new TerrainGraph();
             end = GameObject.FindWithTag("goal").transform;
             start = transform; // can change, to lazy
-            lr = GetComponent<LineRenderer>();
+            if(RenderLine) lr = GetComponent<LineRenderer>();
             RenderPath();
             targetPos = lineVertices[offset];
-            timer = resettimer;
-            
+            timer = resettimer; 
 
         }
 
         private void Update() 
         {
-            // generate the path and render it
-            //RenderPath();
 
             // set the target position to the desired position
             SetTargetPos(offset);
@@ -91,10 +82,14 @@ namespace mma505
             timer -= Time.deltaTime;
             if (timer <= 0)
             {
-                // reset the target position
-                timer = resettimer;
-                RenderPath();
-                targetPos = lineVertices[offset];
+                if (Vector3.Distance(transform.position, end.transform.position) <= 0.5f)
+                {
+                    // reset the target position
+                    timer = resettimer;
+                    RenderPath();
+                    targetPos = lineVertices[offset];
+                }
+
             }
             
         }
@@ -105,42 +100,42 @@ namespace mma505
             RaycastHit hit;
             if (Physics.Raycast(transform.position, direction, out hit, 5f))
             {
-            if (hit.collider.CompareTag("Obstacle") || hit.collider.CompareTag("agent"))
-            {
-                Debug.Log("Obstacle/agent hit front");
+                if (hit.collider.CompareTag("Obstacle") || hit.collider.CompareTag("agent"))
+                {
+                    if (debugRays) Debug.Log("Obstacle/agent hit front");
 
-                Vector3 leftDirection = Quaternion.Euler(0, -45, 0) * direction;
-                RaycastHit leftHit;
-                if (Physics.Raycast(transform.position, leftDirection, out leftHit, 5f))
-                {
-                if (leftHit.collider.CompareTag("Obstacle") || leftHit.collider.CompareTag("agent"))
-                {
-                    Debug.Log("Obstacle/agent hit left");
+                    Vector3 leftDirection = Quaternion.Euler(0, -45, 0) * direction;
+                    RaycastHit leftHit;
+                    if (Physics.Raycast(transform.position, leftDirection, out leftHit, 5f))
+                    {
+                        if (leftHit.collider.CompareTag("Obstacle") || leftHit.collider.CompareTag("agent"))
+                        {
+                            if (debugRays) Debug.Log("Obstacle/agent hit left");
 
-                    Vector3 rightDirection = Quaternion.Euler(0, 45, 0) * direction;
-                    RaycastHit rightHit;
-                    if (Physics.Raycast(transform.position, rightDirection, out rightHit, 5f))
-                    {
-                    if (rightHit.collider.CompareTag("Obstacle") || rightHit.collider.CompareTag("agent"))
-                    {
-                        Debug.Log("Obstacle/agent hit right");
-                        Vector3 newDirection = Quaternion.Euler(0, -90, 0) * direction;
-                        targetPos = transform.position + newDirection.normalized * newTargetDis;
-                    }
-                    else
-                    {
-                        Vector3 newDirection = Quaternion.Euler(0, 45, 0) * direction;
-                        targetPos = transform.position + newDirection.normalized * newTargetDis;
-                    }
+                            Vector3 rightDirection = Quaternion.Euler(0, 45, 0) * direction;
+                            RaycastHit rightHit;
+                            if (Physics.Raycast(transform.position, rightDirection, out rightHit, 5f))
+                            {
+                                if (rightHit.collider.CompareTag("Obstacle") || rightHit.collider.CompareTag("agent"))
+                                {
+                                    if (debugRays) Debug.Log("Obstacle/agent hit right");
+                                    Vector3 newDirection = Quaternion.Euler(0, -90, 0) * direction;
+                                    targetPos = transform.position + newDirection.normalized * newTargetDis;
+                                }
+                                else
+                                {
+                                    Vector3 newDirection = Quaternion.Euler(0, 45, 0) * direction;
+                                    targetPos = transform.position + newDirection.normalized * newTargetDis;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            Vector3 newDirection = Quaternion.Euler(0, -45, 0) * direction;
+                            targetPos = transform.position + newDirection.normalized * newTargetDis;
+                        }
                     }
                 }
-                else
-                {
-                    Vector3 newDirection = Quaternion.Euler(0, -45, 0) * direction;
-                    targetPos = transform.position + newDirection.normalized * newTargetDis;
-                }
-                }
-            }
             }
         }
 
@@ -199,9 +194,14 @@ namespace mma505
                 lineVertices[index++] = new Vector3(x, y, z);
             }
 
-            // Render the path
-            lr.positionCount = path.Count;
-            lr.SetPositions(lineVertices);
+            if (RenderLine == true)
+            {
+                // Render the path
+                lr.positionCount = path.Count;
+                lr.SetPositions(lineVertices);  
+            }
+ 
+            
         }
 
 
@@ -225,6 +225,7 @@ namespace mma505
                     {
                         offset = 0; // clamp the offset to 0
                     }
+
                     // set the target position to the desired position
                     targetPos = lineVertices[offset];
 
@@ -241,22 +242,19 @@ namespace mma505
             if (rb != null && targetPos != null)
             {
                 Vector3 direction = targetPos - transform.position;
-                //direction.y = 0;
 
                 if (direction.magnitude > 0.1f)
                 {
 
-                    // // Direct velocity modification
+                    // Direct velocity modification
                     Vector3 desiredVelocity = direction.normalized * maxvelocity;
                     Vector3 velocityChange = desiredVelocity - rb.linearVelocity;
-                    //velocityChange.y = 0; // Preserve gravity
                     rb.linearVelocity += velocityChange * Time.fixedDeltaTime;
-
-                    // Clamp velocity mince gravity
-                    //float gravity = rb.linearVelocity.y;
+                    
+                    //clamp the velocity to maxvelocity
                     rb.linearVelocity = Vector3.ClampMagnitude(rb.linearVelocity, maxvelocity);
-                    //rb.linearVelocity = new Vector3(rb.linearVelocity.x, rb.linearVelocity.y + (-9.3f * rb.mass * Time.deltaTime), rb.linearVelocity.z);
                     rb.angularVelocity = Vector3.ClampMagnitude(rb.angularVelocity, 7f);
+
                 }
                 else
                 {
@@ -268,13 +266,14 @@ namespace mma505
 
         private void OnDrawGizmos()
         {
-
-            // Draw the path in the editor
-            Gizmos.color = Color.red;
-            Gizmos.DrawLine(transform.position, targetPos);
-            Gizmos.DrawSphere(targetPos, 0.5f);
+            if (RenderTargetGizmo)
+            {
+                // Draw the path in the editor
+                Gizmos.color = Color.red;
+                Gizmos.DrawLine(transform.position, targetPos);
+                Gizmos.DrawSphere(targetPos, 0.5f);
+            }
         
-
         }
     }   
 }
