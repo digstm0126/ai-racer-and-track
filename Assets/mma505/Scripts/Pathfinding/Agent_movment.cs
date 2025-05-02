@@ -69,12 +69,20 @@ namespace mma505
             // set the target position to the desired position
             SetTargetPos(offset);
 
+            // obstacal avoidance
+            ObstacleAvoidance();
+
             // move towards the target position
             MoveToTarget();
 
 
-            
 
+            
+        }
+
+        private void ObstacleAvoidance()
+        {
+            //throw new NotImplementedException();
             
         }
 
