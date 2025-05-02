@@ -101,60 +101,47 @@ namespace mma505
 
         private void ObstacleAvoidance()
         {
-            //throw new NotImplementedException();
-            // send raycast to check for obstacles torwards the target position
             Vector3 direction = targetPos - transform.position;
             RaycastHit hit;
             if (Physics.Raycast(transform.position, direction, out hit, 5f))
             {
-                // check if the raycast hit an obstacle
-                if (hit.collider.CompareTag("Obstacle"))
+            if (hit.collider.CompareTag("Obstacle") || hit.collider.CompareTag("agent"))
+            {
+                Debug.Log("Obstacle/agent hit front");
+
+                Vector3 leftDirection = Quaternion.Euler(0, -45, 0) * direction;
+                RaycastHit leftHit;
+                if (Physics.Raycast(transform.position, leftDirection, out leftHit, 5f))
                 {
-                    Debug.Log("Obstacle hit frount");
+                if (leftHit.collider.CompareTag("Obstacle") || leftHit.collider.CompareTag("agent"))
+                {
+                    Debug.Log("Obstacle/agent hit left");
 
-                    // send a raycast to check for obstacles to the left 
-                    Vector3 leftDirection = Quaternion.Euler(0, -45, 0) * direction;
-                    RaycastHit leftHit;
-                    if (Physics.Raycast(transform.position, leftDirection, out leftHit, 5f))
+                    Vector3 rightDirection = Quaternion.Euler(0, 45, 0) * direction;
+                    RaycastHit rightHit;
+                    if (Physics.Raycast(transform.position, rightDirection, out rightHit, 5f))
                     {
-                        // check if the raycast hit an obstacle
-                        if (leftHit.collider.CompareTag("Obstacle"))
-                        {
-                            Debug.Log("Obstacle hit left");
-
-                            // send a raycast to check for obstacles to the right
-                            Vector3 rightDirection = Quaternion.Euler(0, 45, 0) * direction;
-                            RaycastHit rightHit;
-                            if (Physics.Raycast(transform.position, rightDirection, out rightHit, 5f))
-                            {
-                                // check if the raycast hit an obstacle
-                                if (rightHit.collider.CompareTag("Obstacle"))
-                                {
-                                    Debug.Log("Obstacle hit right");
-                                    //set the target position to bhind the agent to the left
-                                    Vector3 newDirection = Quaternion.Euler(0, -90, 0) * direction;
-                                    targetPos = transform.position + newDirection.normalized * newTargetDis;
-                                }
-                                else
-                                {
-                                    //set the target position to bhind the agent to the left
-                                    Vector3 newDirection = Quaternion.Euler(0, 45, 0) * direction;
-                                    targetPos = transform.position + newDirection.normalized * newTargetDis;
-                                }
-                            }
-                            
-                        }
-                         else
-                        {
-                            //set the target position to bhind the agent to the left
-                            Vector3 newDirection = Quaternion.Euler(0, -45, 0) * direction;
-                            targetPos = transform.position + newDirection.normalized * newTargetDis;
-                        }
+                    if (rightHit.collider.CompareTag("Obstacle") || rightHit.collider.CompareTag("agent"))
+                    {
+                        Debug.Log("Obstacle/agent hit right");
+                        Vector3 newDirection = Quaternion.Euler(0, -90, 0) * direction;
+                        targetPos = transform.position + newDirection.normalized * newTargetDis;
                     }
-                   
+                    else
+                    {
+                        Vector3 newDirection = Quaternion.Euler(0, 45, 0) * direction;
+                        targetPos = transform.position + newDirection.normalized * newTargetDis;
+                    }
+                    }
+                }
+                else
+                {
+                    Vector3 newDirection = Quaternion.Euler(0, -45, 0) * direction;
+                    targetPos = transform.position + newDirection.normalized * newTargetDis;
+                }
                 }
             }
-            
+            }
         }
 
         private void RenderPath()
