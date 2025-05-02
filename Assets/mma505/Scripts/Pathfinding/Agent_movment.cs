@@ -4,15 +4,22 @@ namespace mma505
     using System.Collections.Generic;
     using TMPro;
     using UnityEngine;
+    using UnityEditor;
 
     public class Agent_movment : MonoBehaviour
     {
 
+        [Header("debug settings")]
+        //private Gizmos debugTarget;
+
         [Header("Ai settings")]
 
+        public float resettimer = 5f; // time till the agent resets the target
+        private float timer; // timer to reset the target
+        public float switchPoint = 1f; // distance to the target position before switching to the next node
         public Vector3 targetPos;  //target position
         public float maxvelocity = 10f; //maximum velocity
-        public int offset = 1;
+        public int offset = 1; // how many nodes ahead the agent will it target
         private Rigidbody rb;
 
 
@@ -49,7 +56,6 @@ namespace mma505
             {
                 Debug.LogError("Rigidbody not found on the agent.");
             }
-
             
         }
 
@@ -57,14 +63,19 @@ namespace mma505
         {
             graph = new TerrainGraph();
             end = GameObject.FindWithTag("goal").transform;
-            start = transform;
+            start = transform; // can change, to lazy
             lr = GetComponent<LineRenderer>();
+            RenderPath();
+            targetPos = lineVertices[offset];
+            timer = resettimer;
+            
+
         }
 
         private void Update() 
         {
             // generate the path and render it
-            RenderPath();
+            //RenderPath();
 
             // set the target position to the desired position
             SetTargetPos(offset);
@@ -75,14 +86,73 @@ namespace mma505
             // move towards the target position
             MoveToTarget();
 
-
-
+            // update the timer
+            timer -= Time.deltaTime;
+            if (timer <= 0)
+            {
+                // reset the target position
+                timer = resettimer;
+                RenderPath();
+                targetPos = lineVertices[offset];
+            }
             
         }
 
         private void ObstacleAvoidance()
         {
             //throw new NotImplementedException();
+            // send raycast to check for obstacles torwards the target position
+            Vector3 direction = targetPos - transform.position;
+            RaycastHit hit;
+            if (Physics.Raycast(transform.position, direction, out hit, 5f))
+            {
+                // check if the raycast hit an obstacle
+                if (hit.collider.CompareTag("Obstacle"))
+                {
+                    Debug.Log("Obstacle hit frount");
+
+                    // send a raycast to check for obstacles to the left 
+                    Vector3 leftDirection = Quaternion.Euler(0, -45, 0) * direction;
+                    RaycastHit leftHit;
+                    if (Physics.Raycast(transform.position, leftDirection, out leftHit, 5f))
+                    {
+                        // check if the raycast hit an obstacle
+                        if (leftHit.collider.CompareTag("Obstacle"))
+                        {
+                            Debug.Log("Obstacle hit left");
+
+                            // send a raycast to check for obstacles to the right
+                            Vector3 rightDirection = Quaternion.Euler(0, 45, 0) * direction;
+                            RaycastHit rightHit;
+                            if (Physics.Raycast(transform.position, rightDirection, out rightHit, 5f))
+                            {
+                                // check if the raycast hit an obstacle
+                                if (rightHit.collider.CompareTag("Obstacle"))
+                                {
+                                    Debug.Log("Obstacle hit right");
+                                    //set the target position to bhind the agent to the left
+                                    Vector3 newDirection = Quaternion.Euler(0, -90, 0) * direction;
+                                    targetPos = transform.position + newDirection * 2f;
+                                }
+                                else
+                                {
+                                    //set the target position to bhind the agent to the left
+                                    Vector3 newDirection = Quaternion.Euler(0, 45, 0) * direction;
+                                    targetPos = transform.position + newDirection * 2f;
+                                }
+                            }
+                            
+                        }
+                         else
+                        {
+                            //set the target position to bhind the agent to the left
+                            Vector3 newDirection = Quaternion.Euler(0, -45, 0) * direction;
+                            targetPos = transform.position + newDirection * 2f;
+                        }
+                    }
+                   
+                }
+            }
             
         }
 
@@ -153,16 +223,27 @@ namespace mma505
             // check if the path is not null
             if (lineVertices != null)
             {
-                if (offset >= lineVertices.Length)
+                // check if agent is close to the target position
+                if (Vector3.Distance(transform.position, targetPos) < switchPoint)
                 {
-                    offset = lineVertices.Length - 1; // clamp the offset to the length of the path
+
+                    RenderPath();
+
+                    if (offset >= lineVertices.Length)
+                    {
+                        offset = lineVertices.Length - 1; // clamp the offset to the length of the path
+                    }
+                    else if (offset < 0)
+                    {
+                        offset = 0; // clamp the offset to 0
+                    }
+                    // set the target position to the desired position
+                    targetPos = lineVertices[offset];
+
+                    ObstacleAvoidance();
+                    
                 }
-                else if (offset < 0)
-                {
-                    offset = 0; // clamp the offset to 0
-                }
-                // set the target position to the desired position
-                targetPos = lineVertices[offset];
+               
             }
 
         }
@@ -195,6 +276,15 @@ namespace mma505
             }
         }
 
+        private void OnDrawGizmos()
+        {
 
-    }
+            // Draw the path in the editor
+            Gizmos.color = Color.red;
+            Gizmos.DrawLine(transform.position, targetPos);
+            Gizmos.DrawSphere(targetPos, 0.5f);
+        
+
+        }
+    }   
 }
