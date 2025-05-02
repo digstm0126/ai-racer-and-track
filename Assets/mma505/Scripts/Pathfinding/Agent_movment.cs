@@ -14,6 +14,7 @@ namespace mma505
 
         [Header("Ai settings")]
 
+        public float newTargetDis = 5f; // if colided how far the new target will be
         public float resettimer = 5f; // time till the agent resets the target
         private float timer; // timer to reset the target
         public float switchPoint = 1f; // distance to the target position before switching to the next node
@@ -132,13 +133,13 @@ namespace mma505
                                     Debug.Log("Obstacle hit right");
                                     //set the target position to bhind the agent to the left
                                     Vector3 newDirection = Quaternion.Euler(0, -90, 0) * direction;
-                                    targetPos = transform.position + newDirection * 2f;
+                                    targetPos = transform.position + newDirection.normalized * newTargetDis;
                                 }
                                 else
                                 {
                                     //set the target position to bhind the agent to the left
                                     Vector3 newDirection = Quaternion.Euler(0, 45, 0) * direction;
-                                    targetPos = transform.position + newDirection * 2f;
+                                    targetPos = transform.position + newDirection.normalized * newTargetDis;
                                 }
                             }
                             
@@ -147,7 +148,7 @@ namespace mma505
                         {
                             //set the target position to bhind the agent to the left
                             Vector3 newDirection = Quaternion.Euler(0, -45, 0) * direction;
-                            targetPos = transform.position + newDirection * 2f;
+                            targetPos = transform.position + newDirection.normalized * newTargetDis;
                         }
                     }
                    
@@ -253,7 +254,7 @@ namespace mma505
             if (rb != null && targetPos != null)
             {
                 Vector3 direction = targetPos - transform.position;
-                direction.y = 0;
+                //direction.y = 0;
 
                 if (direction.magnitude > 0.1f)
                 {
@@ -261,11 +262,13 @@ namespace mma505
                     // // Direct velocity modification
                     Vector3 desiredVelocity = direction.normalized * maxvelocity;
                     Vector3 velocityChange = desiredVelocity - rb.linearVelocity;
-                    velocityChange.y = 0; // Preserve gravity
+                    //velocityChange.y = 0; // Preserve gravity
                     rb.linearVelocity += velocityChange * Time.fixedDeltaTime;
 
-                    // Clamp velocity
+                    // Clamp velocity mince gravity
+                    //float gravity = rb.linearVelocity.y;
                     rb.linearVelocity = Vector3.ClampMagnitude(rb.linearVelocity, maxvelocity);
+                    //rb.linearVelocity = new Vector3(rb.linearVelocity.x, rb.linearVelocity.y + (-9.3f * rb.mass * Time.deltaTime), rb.linearVelocity.z);
                     rb.angularVelocity = Vector3.ClampMagnitude(rb.angularVelocity, 7f);
                 }
                 else

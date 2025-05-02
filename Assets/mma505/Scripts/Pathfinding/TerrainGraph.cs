@@ -14,12 +14,14 @@ namespace mma505
         public Node[,] grid;
         public float[,,] cost;
 
-        private float maxHeight = 5f; // If node cost is over 5, it is considered impassable
+        private float maxHeight = 0.4f; // If node cost is over 5, it is considered impassable 
+        // 5 is cringe gaming 2 so its slow and nice
 
         public TerrainGraph()
         {
             // Get reference of the active terrain on the scene
             tData = Terrain.activeTerrain.terrainData;
+
 
             // Create a representation of the graph using the terrain size
             // Taking the x (width) and z (length) values only
@@ -89,11 +91,12 @@ namespace mma505
                 // y here is actually the z
                 bool doExist = (v.x >= 0 && v.x < tWidth && v.y >= 0 && v.y < tLength) ? true : false;
                 bool passable = false;
+                // Check if the neighbouring node is too high. If it is, deem it impassable
                 if (doExist)
                 {
-                    passable = grid[(int)v.x, (int)v.y].nodeHeight < maxHeight;
+                    passable = grid[(int)v.x, (int)v.y].nodeHeight < n.nodeHeight + maxHeight;
                 }
-                // Check if the neighbouring node is too high. If it is, deem it impassable
+                
                 
 
                 if (doExist && passable)
