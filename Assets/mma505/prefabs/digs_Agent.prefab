@@ -76,10 +76,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be35b153b2b344c1d87db4e62a02a4ee, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  debugRays: 0
+  RenderLine: 0
+  RenderTargetGizmo: 0
+  newTargetDis: 3
+  resettimer: 5
+  switchPoint: 2
   targetPos: {x: 0, y: 0, z: 0}
   maxvelocity: 10
   offset: 5
-  algorithm: 3
+  algorithm: 6
 --- !u!120 &6221560922189328869
 LineRenderer:
   serializedVersion: 2
@@ -88,7 +94,7 @@ LineRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5360400627206871452}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
