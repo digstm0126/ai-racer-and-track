@@ -17,7 +17,8 @@ namespace mma505
         public bool RenderTargetGizmo = false; // render the target gizmo
 
         [Header("Ai settings")]
-
+        public float distForObCheck = 5f; // distance untill the agent will check for obstacles agin
+        private float distForObCheckTimer = 0; // timer to check for obstacles
         public float newTargetDis = 5f; // if colided how far the new target will be
         public float resettimer = 5f; // time till the agent resets the target
         private float timer; // timer to reset the target
@@ -68,12 +69,28 @@ namespace mma505
 
         private void Update() 
         {
+            
 
             // set the target position to the desired position
-            SetTargetPos(offset);
+            // check if agent is close to the target position
+            if (Vector3.Distance(transform.position, targetPos) < switchPoint)
+            {
+                SetTargetPos(offset);
+            }
 
+            
             // obstacal avoidance
-            ObstacleAvoidance();
+            // check if the agent has moved enough to check for obstacles agin
+            if (distForObCheckTimer <= 0)
+            {
+                distForObCheckTimer = distForObCheck;
+                ObstacleAvoidance();
+            }
+            else
+            {
+                distForObCheckTimer -= Time.deltaTime;
+            }
+            
 
             // move towards the target position
             MoveToTarget();
@@ -211,27 +228,22 @@ namespace mma505
             // check if the path is not null
             if (lineVertices != null)
             {
-                // check if agent is close to the target position
-                if (Vector3.Distance(transform.position, targetPos) < switchPoint)
+                RenderPath();
+
+                if (offset >= lineVertices.Length)
                 {
-
-                    RenderPath();
-
-                    if (offset >= lineVertices.Length)
-                    {
-                        offset = lineVertices.Length - 1; // clamp the offset to the length of the path
-                    }
-                    else if (offset < 0)
-                    {
-                        offset = 0; // clamp the offset to 0
-                    }
-
-                    // set the target position to the desired position
-                    targetPos = lineVertices[offset];
-
-                    ObstacleAvoidance();
-                    
+                    offset = lineVertices.Length - 1; // clamp the offset to the length of the path
                 }
+                else if (offset < 0)
+                {
+                    offset = 0; // clamp the offset to 0
+                }
+
+                // set the target position to the desired position
+                targetPos = lineVertices[offset];
+
+                ObstacleAvoidance();
+
                
             }
 
@@ -264,16 +276,16 @@ namespace mma505
             }
         }
 
-        private void OnDrawGizmos()
-        {
-            if (RenderTargetGizmo)
-            {
-                // Draw the path in the editor
-                Gizmos.color = Color.red;
-                Gizmos.DrawLine(transform.position, targetPos);
-                Gizmos.DrawSphere(targetPos, 0.5f);
-            }
+        // private void OnDrawGizmos()
+        // {
+        //     if (RenderTargetGizmo)
+        //     {
+        //         // Draw the path in the editor
+        //         Gizmos.color = Color.red;
+        //         Gizmos.DrawLine(transform.position, targetPos);
+        //         Gizmos.DrawSphere(targetPos, 0.5f);
+        //     }
         
-        }
+        // }
     }   
 }
